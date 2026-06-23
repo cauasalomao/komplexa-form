@@ -4,8 +4,31 @@ import { BrowserRouter } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import App from "./App";
-import { supabase } from "./integrations/supabase/client";
+import { supabase, supabaseConfigured } from "./integrations/supabase/client";
 import "./index.css";
+
+/** Tela de erro amigável quando faltam as variáveis de ambiente do Supabase
+ *  (causa #1 de "tela branca" em deploy novo no Vercel). */
+function ConfigError() {
+  return (
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, fontFamily: "Inter, system-ui, sans-serif", background: "#EEF1F6" }}>
+      <div style={{ maxWidth: 520, background: "#fff", border: "1px solid #DDE3ED", borderRadius: 12, padding: 28 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 800, color: "#0E1E35", margin: 0 }}>Configuração faltando</h1>
+        <p style={{ fontSize: 14, color: "#4A5770", marginTop: 10, lineHeight: 1.5 }}>
+          As variáveis de ambiente do Supabase não foram encontradas. No Vercel, vá em{" "}
+          <b>Project → Settings → Environment Variables</b> e adicione:
+        </p>
+        <pre style={{ background: "#F3F6FA", border: "1px solid #DDE3ED", borderRadius: 8, padding: 12, fontSize: 12.5, color: "#0E1E35", overflowX: "auto", marginTop: 12 }}>
+{`VITE_SUPABASE_URL=https://<seu-projeto>.supabase.co
+VITE_SUPABASE_ANON_KEY=<sua-anon-key>`}
+        </pre>
+        <p style={{ fontSize: 13, color: "#8896A8", marginTop: 12, lineHeight: 1.5 }}>
+          Depois de salvar, faça um <b>Redeploy</b> (as variáveis VITE_ são embutidas no build).
+        </p>
+      </div>
+    </div>
+  );
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,11 +65,15 @@ supabase.auth.onAuthStateChange((event) => {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-        <Toaster position="top-right" richColors />
-      </BrowserRouter>
-    </QueryClientProvider>
+    {supabaseConfigured ? (
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <App />
+          <Toaster position="top-right" richColors />
+        </BrowserRouter>
+      </QueryClientProvider>
+    ) : (
+      <ConfigError />
+    )}
   </StrictMode>
 );
