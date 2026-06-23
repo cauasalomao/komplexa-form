@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --navy: #0e1e35;
+    --navy-deep: #081525;
+    --white: #ffffff;
+    --kblue: #1670c3;
+    --g1: #1670c3;
+    --g2: #1099e9;
+    --g3: #24d5ff;
+    --kcyan: #24d5ff;
+    --grad: linear-gradient(90deg, #1670c3 0%, #1099e9 48%, #24d5ff 100%);
+    --grad-r: radial-gradient(circle at 70% 50%, rgba(36, 213, 255, 0.35) 0%, transparent 60%);
+    --txt: #4a5770;
+    --gray: #8896a8;
+    --bdr: #dde3ed;
+    --bg: #f3f6fa;
+    --page: #eef1f6;
+    --tb09: rgba(22, 112, 195, 0.09);
+    --tb18: rgba(22, 112, 195, 0.18);
+    --ok: #16a34a;
+    --okbg: rgba(22, 163, 74, 0.1);
+    --warn: #eb8b50;
+    --warnbg: rgba(235, 139, 80, 0.12);
+    --err: #dc2626;
+    --errbg: rgba(220, 38, 38, 0.1);
+    --radius: 12px;
+  }
+
+  html, body, #root { height: 100%; }
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--page);
+    color: var(--txt);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 { color: var(--navy); font-weight: 700; letter-spacing: -0.01em; }
+}
+
+@layer components {
+  .k-grad-text {
+    background: var(--grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .k-serif {
+    font-family: "Fraunces", Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+  }
+
+  .k-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--kblue);
+  }
+
+  .k-card {
+    background: #fff;
+    border: 1px solid var(--bdr);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+
+  .k-pill {
+    background: var(--grad);
+    color: #fff;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 100px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .k-badge-grad {
+    font-weight: 700;
+    font-size: 9px;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    background: var(--grad);
+    color: #fff;
+    border-radius: 100px;
+  }
+
+  .k-badge-ok {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    background: var(--okbg);
+    color: var(--ok);
+    border-radius: 100px;
+  }
+}

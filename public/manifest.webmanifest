@@ -1,0 +1,30 @@
+{
+  "name": "Komplexa Forms",
+  "short_name": "Komplexa Forms",
+  "description": "Formulários interativos da Komplexa — captação e respostas.",
+  "start_url": "/admin/forms",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F5F7FA",
+  "theme_color": "#0E1E35",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/logotipo_blue.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/logotipo_blue.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/logotipo_blue.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

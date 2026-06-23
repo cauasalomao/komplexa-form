@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- GTM é carregado POR FORMULÁRIO na página pública (/f/:slug) — cada form
+         pode ter um container diferente, configurado no admin. Por isso não há
+         container fixo aqui. window.dataLayer é inicializado pelo snippet do GTM. -->
+    <!-- Favicon: símbolo K com gradient azul (vai bem em fundo claro/escuro do navegador) -->
+    <link rel="icon" type="image/svg+xml" href="/logotipo_blue.svg" />
+    <link rel="apple-touch-icon" href="/logotipo_blue.svg" />
+    <link rel="mask-icon" href="/logotipo_blue.svg" color="#0E1E35" />
+    <!-- Cor da barra do navegador no mobile (navy da brand) -->
+    <meta name="theme-color" content="#0E1E35" />
+    <meta name="description" content="Komplexa Hotéis — Arquitetura de crescimento para reservas diretas." />
+    <!-- PWA: permite "Adicionar à tela inicial" no iOS/Android (modo standalone) -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Komplexa" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,wght@1,400;1,500&display=swap"
+      rel="stylesheet"
+    />
+    <title>Komplexa — Forms</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
