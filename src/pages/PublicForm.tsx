@@ -198,6 +198,12 @@ export default function PublicForm() {
   const [stepIndex, setStepIndex] = useState<number>(-1);
   const [direction, setDirection] = useState<number>(1);
   const [answers, setAnswers] = useState<Record<string, FieldValue>>({});
+  // Ref espelho das respostas. O auto-avanço de select/yes_no chama onSubmit
+  // via setTimeout, cujo closure capturava `answers` ANTES da seleção — por
+  // isso a validação via o campo "vazio" e exigia um 2º clique pra avançar.
+  // Lendo do ref (mutável e compartilhado) a validação sempre vê o valor atual.
+  const answersRef = useRef<Record<string, FieldValue>>({});
+  answersRef.current = answers;
   const [showError, setShowError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitErr, setSubmitErr] = useState<string | null>(null);
@@ -487,7 +493,7 @@ export default function PublicForm() {
 
   const goNext = () => {
     if (currentField) {
-      const v = answers[currentField.id] ?? null;
+      const v = answersRef.current[currentField.id] ?? null;
       const err = validateField(currentField, v);
       if (err) {
         setShowError(true);
@@ -540,7 +546,7 @@ export default function PublicForm() {
           await supabase.rpc("upsert_partial_lead", {
             p_slug: data.slug,
             p_session_id: sessionId,
-            p_answers: answers as any,
+            p_answers: answersRef.current as any,
             p_user_agent: navigator.userAgent,
             p_referrer: document.referrer || null,
             p_utm_source: attribution.utm_source,
@@ -577,7 +583,7 @@ export default function PublicForm() {
     if (!data) return;
     // validar tudo (campos obrigatórios)
     for (const f of data.fields) {
-      const err = validateField(f, answers[f.id] ?? null);
+      const err = validateField(f, answersRef.current[f.id] ?? null);
       if (err) {
         setShowError(true);
         // salta pro primeiro com erro
@@ -599,7 +605,7 @@ export default function PublicForm() {
       const { error } = await supabase.rpc("submit_form_response", {
         p_slug: data.slug,
         p_session_id: sessionId,
-        p_answers: answers as any,
+        p_answers: answersRef.current as any,
         p_user_agent: navigator.userAgent,
         p_referrer: document.referrer || null,
         p_utm_source: attribution.utm_source,
@@ -652,7 +658,7 @@ export default function PublicForm() {
   const onStepSubmit = () => {
     if (currentField && stepIndex === totalSteps - 1) {
       // último campo: validar e submeter
-      const err = validateField(currentField, answers[currentField.id] ?? null);
+      const err = validateField(currentField, answersRef.current[currentField.id] ?? null);
       if (err) { setShowError(true); return; }
       handleSubmit();
     } else {
@@ -663,6 +669,23 @@ export default function PublicForm() {
   // CSS vars de tema — primary_color/bg/grad customizáveis. Fallback Komplexa.
   const primaryColor = data.primary_color || "#1455F5";
   const primaryGrad = `linear-gradient(135deg, ${primaryColor}, color-mix(in srgb, ${primaryColor} 60%, white))`;
+
+  // Override de DESTAQUE: as classes Komplexa (bg-k-grad, border-kblue, text-kblue,
+  // ring/accent...) têm cor fixa. Quando o form tem cor própria, sobrescrevemos
+  // todas elas — escopadas a [data-kform-root] — pra pintar botões, cards
+  // selecionados, bordas, foco, slider e checkbox com a paleta do cliente.
+  const accentCss = data.primary_color
+    ? [
+        `[data-kform-root] .bg-k-grad{background-image:${primaryGrad}!important;}`,
+        `[data-kform-root] .k-grad-text{background:${primaryGrad}!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;}`,
+        `[data-kform-root] .text-kblue,[data-kform-root] .group:hover .group-hover\\:text-kblue{color:${primaryColor}!important;}`,
+        `[data-kform-root] .border-kblue,[data-kform-root] .hover\\:border-kblue:hover,[data-kform-root] .focus\\:border-kblue:focus{border-color:${primaryColor}!important;}`,
+        `[data-kform-root] .bg-kblue\\/5,[data-kform-root] .hover\\:bg-kblue\\/5:hover{background-color:color-mix(in srgb,${primaryColor} 7%,transparent)!important;}`,
+        `[data-kform-root] .bg-kblue\\/10,[data-kform-root] .group:hover .group-hover\\:bg-kblue\\/10{background-color:color-mix(in srgb,${primaryColor} 12%,transparent)!important;}`,
+        `[data-kform-root] .ring-kblue\\/20,[data-kform-root] .focus\\:ring-kblue\\/20:focus{--tw-ring-color:color-mix(in srgb,${primaryColor} 28%,transparent)!important;}`,
+        `[data-kform-root] .accent-kblue{accent-color:${primaryColor}!important;}`,
+      ].join("\n")
+    : "";
   // Fontes customizadas (white label). Corpo herda pra tudo; títulos podem
   // ter fonte própria via <style> escopado abaixo.
   const bodyFont = fontStack(data.font_family);
@@ -685,11 +708,14 @@ export default function PublicForm() {
       className="min-h-[100dvh] bg-gradient-to-b from-kblue/[0.03] via-white to-white text-navy flex flex-col"
       style={{ ...themeStyle, ...customBackground }}
     >
-      {/* Fonte dos títulos escopada a este form (quando diferente do corpo) */}
-      {headingFont && (
+      {/* Estilos escopados a este form: fonte dos títulos + cor de destaque */}
+      {(headingFont || accentCss) && (
         <style
           dangerouslySetInnerHTML={{
-            __html: `[data-kform-root] h1,[data-kform-root] h2,[data-kform-root] h3{font-family:${headingFont};}`,
+            __html:
+              (headingFont
+                ? `[data-kform-root] h1,[data-kform-root] h2,[data-kform-root] h3{font-family:${headingFont};}\n`
+                : "") + accentCss,
           }}
         />
       )}
