@@ -541,6 +541,10 @@ function FormMetaModal({
     white_label?: boolean | null;
     font_family?: string | null;
     heading_font_family?: string | null;
+    question_color?: string | null;
+    answer_color?: string | null;
+    button_color?: string | null;
+    powered_by_variant?: "blue" | "white" | null;
     purpose?: import("@/hooks/useForms").FormPurpose;
     // Sprint 2: LP visual
     welcome_layout?: string | null;
@@ -571,6 +575,10 @@ function FormMetaModal({
   const [whiteLabel, setWhiteLabel] = useState(form.white_label ?? false);
   const [bodyFont, setBodyFont] = useState(form.font_family ?? "");
   const [headingFont, setHeadingFont] = useState(form.heading_font_family ?? "");
+  const [questionColor, setQuestionColor] = useState(form.question_color ?? "");
+  const [answerColor, setAnswerColor] = useState(form.answer_color ?? "");
+  const [buttonColor, setButtonColor] = useState(form.button_color ?? "");
+  const [poweredVariant, setPoweredVariant] = useState<"blue" | "white">(form.powered_by_variant ?? "blue");
   const [purpose, setPurpose] = useState<import("@/hooks/useForms").FormPurpose>(form.purpose ?? "lead");
   // Sprint 2: estado da LP visual mantido em ref pra evitar re-renders chatos
   const [lpState, setLpState] = useState<any>({
@@ -624,6 +632,10 @@ function FormMetaModal({
         white_label: whiteLabel,
         font_family: bodyFont || null,
         heading_font_family: headingFont || null,
+        question_color: questionColor.trim() || null,
+        answer_color: answerColor.trim() || null,
+        button_color: buttonColor.trim() || null,
+        powered_by_variant: poweredVariant,
         purpose,
         ...cleanLP,
       } as any);
@@ -730,10 +742,26 @@ function FormMetaModal({
         </div>
 
         <div className="pt-3 border-t border-kbdr">
+          <p className="k-eyebrow">Cores do formulário</p>
+          <p className="text-[11px] text-kgray mt-1 mb-3">
+            Cada elemento tem cor própria. Deixe vazio pra usar o padrão. O background fica
+            na seção visual acima ("Editar telas" → cores/layout).
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <ColorField label="Cor da pergunta" value={questionColor} onChange={setQuestionColor} fallback="#0E1E35" />
+            <ColorField label="Cor dos campos de resposta" value={answerColor} onChange={setAnswerColor} fallback="#0E1E35" />
+            <ColorField label="Cor do botão / destaque" value={buttonColor} onChange={setButtonColor} fallback="#1455F5" />
+          </div>
+          <p className="text-[11px] text-kgray mt-2">
+            💡 Em fundo escuro, use cores claras na pergunta e nos campos pra ter contraste.
+          </p>
+        </div>
+
+        <div className="pt-3 border-t border-kbdr">
           <p className="k-eyebrow">White label & Fontes</p>
           <p className="text-[11px] text-kgray mt-1 mb-2">
-            Cores, logo e background ficam na seção visual acima. Aqui você remove a marca
-            Komplexa e escolhe as fontes do form.
+            Logo e background ficam na seção visual acima. Aqui você controla a marca
+            Komplexa e as fontes do form.
           </p>
           <label className="flex items-start gap-3 p-3 rounded-md border border-kbdr hover:border-kblue cursor-pointer transition mb-3">
             <input
@@ -750,6 +778,18 @@ function FormMetaModal({
               </p>
             </div>
           </label>
+          {!whiteLabel && (
+            <div className="mb-3">
+              <KSelect
+                label='Selo "powered by Komplexa"'
+                value={poweredVariant}
+                onChange={(e) => setPoweredVariant(e.target.value as "blue" | "white")}
+              >
+                <option value="blue">Azul (fundo claro)</option>
+                <option value="white">Branca (fundo escuro)</option>
+              </KSelect>
+            </div>
+          )}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <KSelect label="Fonte do corpo" value={bodyFont} onChange={(e) => setBodyFont(e.target.value)}>
               <option value="">Padrão (Inter)</option>
@@ -795,6 +835,42 @@ function FormMetaModal({
         </div>
       </form>
     </KModal>
+  );
+}
+
+/** Campo de cor: swatch (input type=color) + hex editável + limpar. */
+function ColorField({
+  label, value, onChange, fallback,
+}: { label: string; value: string; onChange: (v: string) => void; fallback: string }) {
+  return (
+    <div>
+      <p className="text-[12px] font-semibold text-navy mb-1">{label}</p>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={value || fallback}
+          onChange={(e) => onChange(e.target.value)}
+          className="h-9 w-10 shrink-0 rounded-md border border-kbdr cursor-pointer bg-white p-0.5"
+          title="Escolher cor"
+        />
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={`${fallback} (padrão)`}
+          className="flex-1 min-w-0 h-9 px-3 rounded-md border border-kbdr text-[13px] focus:outline-none focus:border-kblue"
+        />
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="shrink-0 h-9 px-2 text-[11px] text-kgray hover:text-danger"
+            title="Usar padrão"
+          >
+            limpar
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 

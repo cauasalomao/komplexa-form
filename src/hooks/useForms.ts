@@ -72,6 +72,14 @@ export interface FormRow {
   hero_stat?: { value: string; label: string; sublabel?: string } | null;
   /** Container GTM próprio do form (formato GTM-XXXXXXX). Carregado só na página pública. */
   gtm_container_id?: string | null;
+  /** Cor do texto das perguntas/títulos. Null = padrão. */
+  question_color?: string | null;
+  /** Cor do texto dos campos de resposta. Null = padrão. */
+  answer_color?: string | null;
+  /** Cor dos botões e destaques. Null = usa primary_color. */
+  button_color?: string | null;
+  /** Versão do selo "powered by Komplexa": 'blue' ou 'white'. */
+  powered_by_variant?: "blue" | "white" | null;
   /** White label: esconde a marca "powered by Komplexa" e o logo padrão. */
   white_label?: boolean | null;
   /** Fonte do corpo (Google Fonts). Null = Inter. */

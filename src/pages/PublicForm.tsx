@@ -40,6 +40,11 @@ interface PublicForm {
   white_label?: boolean | null;
   font_family?: string | null;
   heading_font_family?: string | null;
+  // Cores granulares
+  question_color?: string | null;
+  answer_color?: string | null;
+  button_color?: string | null;
+  powered_by_variant?: "blue" | "white" | null;
 }
 
 /**
@@ -666,26 +671,49 @@ export default function PublicForm() {
     }
   };
 
-  // CSS vars de tema — primary_color/bg/grad customizáveis. Fallback Komplexa.
-  const primaryColor = data.primary_color || "#1455F5";
-  const primaryGrad = `linear-gradient(135deg, ${primaryColor}, color-mix(in srgb, ${primaryColor} 60%, white))`;
+  // ----- Cores -----
+  // botão/destaque: button_color tem prioridade; cai pra primary_color; depois Komplexa.
+  const buttonColor = data.button_color || data.primary_color || "#1455F5";
+  const primaryColor = buttonColor; // usado na barra de progresso + vars de tema
+  const primaryGrad = `linear-gradient(135deg, ${buttonColor}, color-mix(in srgb, ${buttonColor} 65%, white))`;
 
-  // Override de DESTAQUE: as classes Komplexa (bg-k-grad, border-kblue, text-kblue,
-  // ring/accent...) têm cor fixa. Quando o form tem cor própria, sobrescrevemos
-  // todas elas — escopadas a [data-kform-root] — pra pintar botões, cards
-  // selecionados, bordas, foco, slider e checkbox com a paleta do cliente.
-  const accentCss = data.primary_color
-    ? [
-        `[data-kform-root] .bg-k-grad{background-image:${primaryGrad}!important;}`,
-        `[data-kform-root] .k-grad-text{background:${primaryGrad}!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;}`,
-        `[data-kform-root] .text-kblue,[data-kform-root] .group:hover .group-hover\\:text-kblue{color:${primaryColor}!important;}`,
-        `[data-kform-root] .border-kblue,[data-kform-root] .hover\\:border-kblue:hover,[data-kform-root] .focus\\:border-kblue:focus{border-color:${primaryColor}!important;}`,
-        `[data-kform-root] .bg-kblue\\/5,[data-kform-root] .hover\\:bg-kblue\\/5:hover{background-color:color-mix(in srgb,${primaryColor} 7%,transparent)!important;}`,
-        `[data-kform-root] .bg-kblue\\/10,[data-kform-root] .group:hover .group-hover\\:bg-kblue\\/10{background-color:color-mix(in srgb,${primaryColor} 12%,transparent)!important;}`,
-        `[data-kform-root] .ring-kblue\\/20,[data-kform-root] .focus\\:ring-kblue\\/20:focus{--tw-ring-color:color-mix(in srgb,${primaryColor} 28%,transparent)!important;}`,
-        `[data-kform-root] .accent-kblue{accent-color:${primaryColor}!important;}`,
-      ].join("\n")
-    : "";
+  // Monta o CSS escopado a [data-kform-root]. Cada grupo é independente:
+  //   - botão/destaque (button_color): botões, card selecionado, foco, ring, slider
+  //   - pergunta (question_color): texto das perguntas/títulos
+  //   - resposta (answer_color): texto dos inputs e das opções
+  const cssParts: string[] = [];
+
+  if (data.button_color || data.primary_color) {
+    const b = buttonColor;
+    cssParts.push(
+      `[data-kform-root] .bg-k-grad{background-image:${primaryGrad}!important;}`,
+      `[data-kform-root] .k-grad-text{background:${primaryGrad}!important;-webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;}`,
+      `[data-kform-root] .text-kblue,[data-kform-root] .group:hover .group-hover\\:text-kblue{color:${b}!important;}`,
+      `[data-kform-root] .border-kblue,[data-kform-root] .hover\\:border-kblue:hover,[data-kform-root] .focus\\:border-kblue:focus{border-color:${b}!important;}`,
+      `[data-kform-root] .bg-kblue\\/5,[data-kform-root] .hover\\:bg-kblue\\/5:hover{background-color:color-mix(in srgb,${b} 8%,transparent)!important;}`,
+      `[data-kform-root] .bg-kblue\\/10,[data-kform-root] .group:hover .group-hover\\:bg-kblue\\/10{background-color:color-mix(in srgb,${b} 12%,transparent)!important;}`,
+      `[data-kform-root] .ring-kblue\\/20,[data-kform-root] .focus\\:ring-kblue\\/20:focus{--tw-ring-color:color-mix(in srgb,${b} 30%,transparent)!important;}`,
+      `[data-kform-root] .accent-kblue{accent-color:${b}!important;}`,
+    );
+  }
+
+  if (data.question_color) {
+    // h?.text-navy tem especificidade maior que .text-navy (answer) → perguntas
+    // ganham mesmo quando answer_color também está setado.
+    const q = data.question_color;
+    cssParts.push(
+      `[data-kform-root] h1,[data-kform-root] h2{color:${q}!important;}`,
+      `[data-kform-root] h1.text-navy,[data-kform-root] h2.text-navy,[data-kform-root] h3.text-navy{color:${q}!important;}`,
+    );
+  }
+
+  if (data.answer_color) {
+    const a = data.answer_color;
+    cssParts.push(
+      `[data-kform-root] .text-navy{color:${a}!important;}`,
+      `[data-kform-root] input,[data-kform-root] textarea{caret-color:${a}!important;}`,
+    );
+  }
   // Fontes customizadas (white label). Corpo herda pra tudo; títulos podem
   // ter fonte própria via <style> escopado abaixo.
   const bodyFont = fontStack(data.font_family);
@@ -708,14 +736,14 @@ export default function PublicForm() {
       className="min-h-[100dvh] bg-gradient-to-b from-kblue/[0.03] via-white to-white text-navy flex flex-col"
       style={{ ...themeStyle, ...customBackground }}
     >
-      {/* Estilos escopados a este form: fonte dos títulos + cor de destaque */}
-      {(headingFont || accentCss) && (
+      {/* Estilos escopados a este form: fonte dos títulos + cores (botão/pergunta/resposta) */}
+      {(headingFont || cssParts.length > 0) && (
         <style
           dangerouslySetInnerHTML={{
             __html:
               (headingFont
                 ? `[data-kform-root] h1,[data-kform-root] h2,[data-kform-root] h3{font-family:${headingFont};}\n`
-                : "") + accentCss,
+                : "") + cssParts.join("\n"),
           }}
         />
       )}
@@ -912,7 +940,24 @@ export default function PublicForm() {
 
       {!data.white_label && (
         <footer className="py-3 text-center text-[10px] text-kgray">
-          powered by <span className="font-bold k-grad-text">Komplexa</span>
+          powered by{" "}
+          {data.powered_by_variant === "white" ? (
+            <span className="font-bold text-white">Komplexa</span>
+          ) : (
+            // Azul Komplexa fixo via inline style — imune ao override de cor do
+            // botão (que repinta .k-grad-text). O selo mantém a marca real.
+            <span
+              className="font-bold"
+              style={{
+                background: "linear-gradient(90deg,#1670C3 0%,#1099E9 48%,#24D5FF 100%)",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Komplexa
+            </span>
+          )}
         </footer>
       )}
     </div>
