@@ -80,6 +80,14 @@ export interface FormRow {
   button_color?: string | null;
   /** Versão do selo "powered by Komplexa": 'blue' ou 'white'. */
   powered_by_variant?: "blue" | "white" | null;
+  /** Endpoint do CRM que recebe o POST a cada submissão (webhook push). */
+  webhook_url?: string | null;
+  /** Token enviado no header X-Webhook-Token pro CRM validar a origem. */
+  webhook_secret?: string | null;
+  /** URL completa do webhook do Kallify (inclui token do tenant + ?source=).
+   *  Quando setada, cada submissão é traduzida pro formato Kallify e enviada
+   *  via trigger server-side. Segredo: nunca exposto ao front público. */
+  kallify_webhook_url?: string | null;
   /** White label: esconde a marca "powered by Komplexa" e o logo padrão. */
   white_label?: boolean | null;
   /** Fonte do corpo (Google Fonts). Null = Inter. */

@@ -545,6 +545,9 @@ function FormMetaModal({
     answer_color?: string | null;
     button_color?: string | null;
     powered_by_variant?: "blue" | "white" | null;
+    webhook_url?: string | null;
+    webhook_secret?: string | null;
+    kallify_webhook_url?: string | null;
     purpose?: import("@/hooks/useForms").FormPurpose;
     // Sprint 2: LP visual
     welcome_layout?: string | null;
@@ -579,6 +582,9 @@ function FormMetaModal({
   const [answerColor, setAnswerColor] = useState(form.answer_color ?? "");
   const [buttonColor, setButtonColor] = useState(form.button_color ?? "");
   const [poweredVariant, setPoweredVariant] = useState<"blue" | "white">(form.powered_by_variant ?? "blue");
+  const [webhookUrl, setWebhookUrl] = useState(form.webhook_url ?? "");
+  const [webhookSecret, setWebhookSecret] = useState(form.webhook_secret ?? "");
+  const [kallifyUrl, setKallifyUrl] = useState(form.kallify_webhook_url ?? "");
   const [purpose, setPurpose] = useState<import("@/hooks/useForms").FormPurpose>(form.purpose ?? "lead");
   // Sprint 2: estado da LP visual mantido em ref pra evitar re-renders chatos
   const [lpState, setLpState] = useState<any>({
@@ -599,6 +605,16 @@ function FormMetaModal({
     const gtmClean = gtmId.trim().toUpperCase();
     if (gtmClean && !/^GTM-[A-Z0-9]+$/.test(gtmClean)) {
       toast.error("GTM inválido", { description: "Use o formato GTM-XXXXXXX." });
+      return;
+    }
+    if (webhookUrl.trim() && !/^https?:\/\//i.test(webhookUrl.trim())) {
+      toast.error("Webhook inválido", { description: "A URL deve começar com https://" });
+      return;
+    }
+    if (kallifyUrl.trim() && !/^https?:\/\/.+\/api\/webhooks\/lead\//i.test(kallifyUrl.trim())) {
+      toast.error("URL do Kallify inválida", {
+        description: "Cole a URL completa do webhook (…/api/webhooks/lead/SEU_TOKEN).",
+      });
       return;
     }
     try {
@@ -636,6 +652,9 @@ function FormMetaModal({
         answer_color: answerColor.trim() || null,
         button_color: buttonColor.trim() || null,
         powered_by_variant: poweredVariant,
+        webhook_url: webhookUrl.trim() || null,
+        webhook_secret: webhookSecret.trim() || null,
+        kallify_webhook_url: kallifyUrl.trim() || null,
         purpose,
         ...cleanLP,
       } as any);
@@ -827,6 +846,52 @@ function FormMetaModal({
             placeholder="GTM-XXXXXXX"
             hint="Deixe vazio pra não carregar nenhum GTM."
           />
+        </div>
+
+        <div className="pt-3 border-t border-kbdr">
+          <p className="k-eyebrow">Integração / CRM (Kallify)</p>
+          <p className="text-[11px] text-kgray mt-1 mb-2">
+            Cole a URL completa do webhook do Kallify. Cada submissão vira um lead
+            no funil de SDR automaticamente: <b>nome</b>, <b>e-mail</b> e{" "}
+            <b>telefone</b> viram os campos fixos do lead; as demais perguntas
+            entram como campos personalizados (o título da pergunta vira a chave —
+            mantenha os rótulos estáveis). O envio é server-side; o token na URL é
+            tratado como segredo e nunca aparece no formulário público.
+          </p>
+          <KInput
+            label="Webhook do Kallify"
+            value={kallifyUrl}
+            onChange={(e) => setKallifyUrl(e.target.value)}
+            placeholder="https://www.kallify.com.br/api/webhooks/lead/SEU_TOKEN?source=site"
+            hint="Use ?source=<canal> pra identificar a origem (ex.: ?source=site, ?source=anuncio_meta). Vazio = sem integração."
+          />
+
+          <details className="mt-3">
+            <summary className="text-[11px] text-kgray cursor-pointer select-none hover:text-navy">
+              Webhook genérico (formato nativo Komplexa) — avançado
+            </summary>
+            <div className="mt-2 space-y-2">
+              <p className="text-[11px] text-kgray">
+                Envia um POST no formato nativo Komplexa (não-Kallify) a cada
+                submissão. Use só se você tem um endpoint próprio. Independente do
+                Kallify acima — os dois podem estar ativos ao mesmo tempo.
+              </p>
+              <KInput
+                label="URL do webhook"
+                value={webhookUrl}
+                onChange={(e) => setWebhookUrl(e.target.value)}
+                placeholder="https://seu-endpoint.com/webhook"
+                hint="Vazio = desativado."
+              />
+              <KInput
+                label="Token (header X-Webhook-Token)"
+                value={webhookSecret}
+                onChange={(e) => setWebhookSecret(e.target.value)}
+                placeholder="opcional"
+                hint="Enviado no header pro seu endpoint validar a origem."
+              />
+            </div>
+          </details>
         </div>
 
         <div className="flex justify-end gap-2 pt-3 border-t border-kbdr">
