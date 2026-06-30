@@ -372,6 +372,22 @@ function FieldInput({
         </div>
       );
 
+    case "date":
+      // Seletor de data nativo — só dia/mês/ano, sem horário.
+      // Valor salvo como string ISO 'YYYY-MM-DD'.
+      return (
+        <input
+          ref={inputRef}
+          type="date"
+          value={(value as string) ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={handleEnter}
+          onBlur={() => onBlur?.()}
+          className={baseInput}
+          style={{ colorScheme: "light" }}
+        />
+      );
+
     case "long_text":
       return (
         <textarea

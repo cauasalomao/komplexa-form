@@ -6,6 +6,7 @@ export type FormFieldType =
   | "select" | "multi_select" | "range" | "yes_no"
   | "cpf" | "cnpj"
   | "meeting_slot" // agendamento de call (datetime preferido)
+  | "date"         // data pura (dia/mês/ano), sem horário — salva 'YYYY-MM-DD'
   | "file"         // anexo (PDF/DOC/imagem) — upload pro Storage form-uploads
   | "number"       // inteiro genérico (UHs, qtd, idade) — só dígitos
   | "currency";    // valor monetário em BRL — máscara R$ 1.234,56
@@ -119,6 +120,7 @@ export const FIELD_TYPE_LABEL: Record<FormFieldType, string> = {
   cpf: "CPF",
   cnpj: "CNPJ",
   meeting_slot: "📅 Agendar call",
+  date: "📆 Data (dia/mês/ano)",
   file: "📎 Anexo (PDF/DOC/imagem)",
   number: "🔢 Número (UHs, qtd, idade)",
   currency: "💵 Valor (R$)",

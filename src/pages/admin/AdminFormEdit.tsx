@@ -27,7 +27,7 @@ const FIELD_TYPES: FormFieldType[] = [
   "number", "currency",
   "select", "multi_select", "yes_no", "range",
   "cpf", "cnpj",
-  "meeting_slot",
+  "meeting_slot", "date",
   "file",
 ];
 
