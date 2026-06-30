@@ -673,8 +673,10 @@ function FormMetaModal({
   // página pública substitui pelas respostas do lead. Persiste na hora (não
   // depende do botão "Salvar") pra garantir que a mensagem dinâmica vá pro ar.
   // O número do WhatsApp é opcional (sem ele, o lead escolhe o contato).
+  // Usa {Nome do contato} (rótulo do mapeamento) em vez de {Nome} pra que a
+  // mensagem continue resolvendo mesmo se o admin renomear a pergunta do nome.
   const HOTEL_WHATS_MSG =
-    "Olá, eu me chamo {Nome} e tenho interesse em uma reserva do dia {Check-in} ao dia {Check-out}.";
+    "Olá, eu me chamo {Nome do contato} e tenho interesse em uma reserva do dia {Check-in} ao dia {Check-out}.";
   const HOTEL_TEXTS = {
     welcome_eyebrow: "RESERVAS",
     welcome_title: "Garanta sua reserva",
@@ -834,9 +836,10 @@ function FormMetaModal({
             pronto e o lead escolhe o contato.
             <br />
             💡 Na mensagem, use <code className="bg-kbg px-1 rounded">{"{Rótulo}"}</code> pra inserir a
-            resposta de um campo (ex.: <code className="bg-kbg px-1 rounded">{"{Nome}"}</code>,{" "}
-            <code className="bg-kbg px-1 rounded">{"{Check-in}"}</code>). O texto entre chaves precisa
-            ser igual ao rótulo da pergunta; datas saem como DD/MM/AAAA.
+            resposta de um campo (ex.: <code className="bg-kbg px-1 rounded">{"{Check-in}"}</code>). Vale
+            o rótulo da pergunta ou o mapeamento — ex.:{" "}
+            <code className="bg-kbg px-1 rounded">{"{Nome do contato}"}</code> pega o campo mapeado como
+            nome mesmo que você renomeie a pergunta. Datas saem como DD/MM/AAAA.
           </p>
           <div className="grid grid-cols-1 gap-3">
             <KInput

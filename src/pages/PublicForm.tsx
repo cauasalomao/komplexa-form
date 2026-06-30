@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { KLogo } from "@/components/k/KLogo";
 import { FormStepView, validateField, type FieldValue } from "@/components/form/FormStepView";
 import { WelcomeRenderer, type WelcomeLayout } from "@/components/form/welcome-layouts";
-import type { FormField, FormFieldOption } from "@/hooks/useForms";
+import { FIELD_MAPPING_LABEL, type FormField, type FormFieldOption } from "@/hooks/useForms";
 
 interface PublicForm {
   id: string;
@@ -145,8 +145,25 @@ function answerToText(field: FormField, value: FieldValue): string {
 }
 
 /**
- * Substitui tokens {Rótulo do campo} pela resposta do lead. Casa o token
- * (normalizado) contra o label de cada campo. Token sem campo correspondente
+ * Acha o campo que um token {…} referencia. Casa (normalizado) por, em ordem:
+ *   1. rótulo da pergunta (ex.: {Check-in})
+ *   2. chave do mapeamento (ex.: {contact_name})
+ *   3. rótulo do mapeamento (ex.: {Nome do contato})
+ * O rótulo tem prioridade pra não confundir campos com o mesmo mapeamento
+ * (ex.: check-in e check-out são ambos "note"). Assim, mesmo renomeando a
+ * pergunta, {Nome do contato} continua pegando o campo mapeado como nome.
+ */
+function findFieldForToken(token: string, fields: FormField[]): FormField | undefined {
+  const norm = normalizeToken(token);
+  return (
+    fields.find((f) => normalizeToken(f.label) === norm) ??
+    fields.find((f) => normalizeToken(f.field_mapping) === norm) ??
+    fields.find((f) => normalizeToken(FIELD_MAPPING_LABEL[f.field_mapping] ?? "") === norm)
+  );
+}
+
+/**
+ * Substitui tokens {…} pela resposta do lead. Token sem campo correspondente
  * fica literal (ajuda o admin a notar erro de digitação); campo casado mas
  * sem resposta vira string vazia. Ex: "reserva de {Check-in} a {Check-out}".
  */
@@ -157,8 +174,7 @@ function interpolateMessage(
 ): string | null {
   if (!message) return message ?? null;
   return message.replace(/\{([^}]+)\}/g, (whole, token: string) => {
-    const norm = normalizeToken(token);
-    const field = fields.find((f) => normalizeToken(f.label) === norm);
+    const field = findFieldForToken(token, fields);
     if (!field) return whole;
     return answerToText(field, answers[field.id] ?? null);
   });
