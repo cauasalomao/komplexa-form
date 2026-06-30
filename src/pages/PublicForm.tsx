@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { KLogo } from "@/components/k/KLogo";
 import { FormStepView, validateField, type FieldValue } from "@/components/form/FormStepView";
 import { WelcomeRenderer, type WelcomeLayout } from "@/components/form/welcome-layouts";
-import type { FormField } from "@/hooks/useForms";
+import type { FormField, FormFieldOption } from "@/hooks/useForms";
 
 interface PublicForm {
   id: string;
@@ -122,12 +122,55 @@ function buildWhatsAppLink(number?: string | null, message?: string | null): str
     : base;
 }
 
+/** Normaliza rótulo pra casar token: lowercase, sem acento, sem pontuação. */
+function normalizeToken(s: string): string {
+  return s.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+/** Converte o valor da resposta em texto pra mensagem (datas viram DD/MM/AAAA). */
+function answerToText(field: FormField, value: FieldValue): string {
+  if (value == null || value === "") return "";
+  if (Array.isArray(value)) return value.map((o) => o.label).join(", ");
+  if (typeof value === "object") return (value as FormFieldOption).label ?? "";
+  if (field.field_type === "date") {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value));
+    if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  }
+  return String(value);
+}
+
+/**
+ * Substitui tokens {Rótulo do campo} pela resposta do lead. Casa o token
+ * (normalizado) contra o label de cada campo. Token sem campo correspondente
+ * fica literal (ajuda o admin a notar erro de digitação); campo casado mas
+ * sem resposta vira string vazia. Ex: "reserva de {Check-in} a {Check-out}".
+ */
+function interpolateMessage(
+  message: string | null | undefined,
+  fields: FormField[],
+  answers: Record<string, FieldValue>,
+): string | null {
+  if (!message) return message ?? null;
+  return message.replace(/\{([^}]+)\}/g, (whole, token: string) => {
+    const norm = normalizeToken(token);
+    const field = fields.find((f) => normalizeToken(f.label) === norm);
+    if (!field) return whole;
+    return answerToText(field, answers[field.id] ?? null);
+  });
+}
+
 /**
  * Destino do redirect pós-envio. WhatsApp tem prioridade sobre redirect_url:
  * se o form tem número de WhatsApp configurado, o botão final leva pra lá.
+ * A mensagem do WhatsApp aceita tokens {Rótulo} preenchidos com as respostas.
  */
-function getEffectiveRedirect(form: PublicForm): { url: string; isWhatsApp: boolean } | null {
-  const wa = buildWhatsAppLink(form.whatsapp_number, form.whatsapp_message);
+function getEffectiveRedirect(
+  form: PublicForm,
+  answers: Record<string, FieldValue>,
+): { url: string; isWhatsApp: boolean } | null {
+  const msg = interpolateMessage(form.whatsapp_message, form.fields, answers);
+  const wa = buildWhatsAppLink(form.whatsapp_number, msg);
   if (wa) return { url: wa, isWhatsApp: true };
   if (form.redirect_url) return { url: form.redirect_url, isWhatsApp: false };
   return null;
@@ -460,7 +503,7 @@ export default function PublicForm() {
   // ---------- redirect timer pós-submit (WhatsApp ou redirect_url) ----------
   useEffect(() => {
     if (!data || stepIndex !== data.fields.length) return;
-    const eff = getEffectiveRedirect(data);
+    const eff = getEffectiveRedirect(data, answersRef.current);
     if (!eff) return;
     const t = setTimeout(() => { window.location.href = eff.url; }, 5000);
     return () => clearTimeout(t);
@@ -893,7 +936,7 @@ export default function PublicForm() {
                 <p className="mt-3 text-[15px] text-ktxt">{data.thank_you_message}</p>
               )}
               {(() => {
-                const eff = getEffectiveRedirect(data);
+                const eff = getEffectiveRedirect(data, answers);
                 if (!eff) return null;
                 return (
                   <div className="mt-6">

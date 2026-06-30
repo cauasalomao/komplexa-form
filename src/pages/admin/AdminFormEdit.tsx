@@ -272,7 +272,7 @@ export default function AdminFormEdit() {
         />
       )}
       {editingMeta && (
-        <FormMetaModal form={form} onClose={() => setEditingMeta(false)} />
+        <FormMetaModal form={form} fields={fields} onClose={() => setEditingMeta(false)} />
       )}
     </div>
   );
@@ -522,8 +522,9 @@ function slugifyOption(s: string): string {
 }
 
 function FormMetaModal({
-  form, onClose,
+  form, fields, onClose,
 }: {
+  fields: FormField[];
   form: {
     id: string;
     welcome_eyebrow: string | null;
@@ -563,6 +564,8 @@ function FormMetaModal({
   onClose: () => void;
 }) {
   const upd = useUpdateForm();
+  const upsertField = useUpsertField();
+  const [applyingPreset, setApplyingPreset] = useState(false);
   const [welcomeEyebrow, setWelcomeEyebrow] = useState(form.welcome_eyebrow ?? "");
   const [welcomeTitle, setWelcomeTitle] = useState(form.welcome_title);
   const [welcomeSubtitle, setWelcomeSubtitle] = useState(form.welcome_subtitle ?? "");
@@ -665,9 +668,78 @@ function FormMetaModal({
     }
   };
 
+  // Modelo "Hotel": cria os campos faltantes (Nome, Check-in, Check-out, E-mail)
+  // e preenche os textos + a mensagem do WhatsApp com tokens {Rótulo} que a
+  // página pública substitui pelas respostas do lead. O número do WhatsApp e o
+  // botão "Salvar" ficam por conta do admin (não dá pra adivinhar o número).
+  const HOTEL_WHATS_MSG =
+    "Olá, eu me chamo {Nome} e tenho interesse em uma reserva do dia {Check-in} ao dia {Check-out}.";
+  const applyHotelPreset = async () => {
+    if (fields.length > 0 && !confirm(
+      "Aplicar o modelo Hotel? Os campos que faltarem (Nome, Check-in, Check-out, " +
+      "E-mail) serão adicionados e os textos das telas + a mensagem do WhatsApp " +
+      "serão preenchidos. Clique em Salvar no final pra confirmar os textos."
+    )) return;
+    setApplyingPreset(true);
+    try {
+      const specs: Array<{
+        label: string; field_type: FormFieldType; field_mapping: FormFieldMapping; placeholder?: string;
+      }> = [
+        { label: "Nome", field_type: "text", field_mapping: "contact_name", placeholder: "Seu nome completo" },
+        { label: "Check-in", field_type: "date", field_mapping: "note" },
+        { label: "Check-out", field_type: "date", field_mapping: "note" },
+        { label: "E-mail", field_type: "email", field_mapping: "contact_email", placeholder: "voce@email.com" },
+      ];
+      let order = fields.length;
+      for (const s of specs) {
+        const exists = fields.some((f) => f.label.trim().toLowerCase() === s.label.toLowerCase());
+        if (exists) continue;
+        await upsertField.mutateAsync({
+          form_id: form.id,
+          field_type: s.field_type,
+          label: s.label,
+          field_mapping: s.field_mapping,
+          required: true,
+          placeholder: s.placeholder ?? null,
+          options: [],
+          display_order: order++,
+        } as any);
+      }
+      // Preenche textos no estado local — admin confirma no "Salvar".
+      setWelcomeEyebrow("RESERVAS");
+      setWelcomeTitle("Garanta sua reserva");
+      setWelcomeSubtitle("Preencha em 30 segundos e fale com a gente no WhatsApp.");
+      setWelcomeButton("Fazer reserva");
+      setThankTitle("Quase lá!");
+      setThankMsg("Te levamos pro WhatsApp pra confirmar sua reserva.");
+      setWhatsMsg(HOTEL_WHATS_MSG);
+      toast.success("Modelo Hotel aplicado", {
+        description: "Preencha o número do WhatsApp e clique em Salvar.",
+      });
+    } catch (e: any) {
+      toast.error("Erro ao aplicar modelo", { description: e.message });
+    } finally {
+      setApplyingPreset(false);
+    }
+  };
+
   return (
     <KModal open onClose={onClose} title="Editar telas e visual da LP" width={780}>
       <form onSubmit={save} className="flex flex-col gap-5">
+        <div className="rounded-md border border-kblue/30 bg-kblue/5 p-3 flex items-center gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-[13px] font-bold text-navy">🏨 Modelo Hotel (reserva)</p>
+            <p className="text-[11.5px] text-ktxt mt-0.5 leading-snug">
+              Cria os campos <b>Nome, Check-in, Check-out e E-mail</b> e configura o redirecionamento
+              pro WhatsApp com a mensagem "Olá, eu me chamo … e tenho interesse em uma reserva do dia …
+              ao dia …". Depois é só preencher o número do WhatsApp e salvar.
+            </p>
+          </div>
+          <KButton type="button" variant="outline" size="sm" onClick={applyHotelPreset} loading={applyingPreset}>
+            Aplicar modelo
+          </KButton>
+        </div>
+
         <KTextarea label="Descrição interna" value={desc} onChange={(e) => setDesc(e.target.value)} rows={2} />
 
         <div>
@@ -741,6 +813,11 @@ function FormMetaModal({
           <p className="text-[11px] text-kgray mt-1 mb-2">
             Se preencher o número, ao enviar o form o botão final leva o lead pra uma conversa
             no WhatsApp (e redireciona em 5s). Tem prioridade sobre o Redirect URL acima.
+            <br />
+            💡 Na mensagem, use <code className="bg-kbg px-1 rounded">{"{Rótulo}"}</code> pra inserir a
+            resposta de um campo (ex.: <code className="bg-kbg px-1 rounded">{"{Nome}"}</code>,{" "}
+            <code className="bg-kbg px-1 rounded">{"{Check-in}"}</code>). O texto entre chaves precisa
+            ser igual ao rótulo da pergunta; datas saem como DD/MM/AAAA.
           </p>
           <div className="grid grid-cols-1 gap-3">
             <KInput
