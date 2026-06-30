@@ -509,7 +509,9 @@ export default function PublicForm() {
     if (!data || stepIndex !== data.fields.length) return;
     const eff = getEffectiveRedirect(data, answersRef.current);
     if (!eff) return;
-    const t = setTimeout(() => { window.location.href = eff.url; }, 5000);
+    // WhatsApp: handoff instantâneo (o lead já terminou — não faz sentido segurar).
+    // Redirect URL genérico: mantém 5s pra dar tempo de ler a tela de obrigado.
+    const t = setTimeout(() => { window.location.href = eff.url; }, eff.isWhatsApp ? 0 : 5000);
     return () => clearTimeout(t);
   }, [stepIndex, data]);
 
@@ -960,7 +962,9 @@ export default function PublicForm() {
                         <>Continuar <ArrowRight className="h-4 w-4" /></>
                       )}
                     </a>
-                    <p className="mt-2 text-[11px] text-kgray">redirecionando em 5s</p>
+                    <p className="mt-2 text-[11px] text-kgray">
+                      {eff.isWhatsApp ? "abrindo o WhatsApp…" : "redirecionando em 5s"}
+                    </p>
                   </div>
                 );
               })()}

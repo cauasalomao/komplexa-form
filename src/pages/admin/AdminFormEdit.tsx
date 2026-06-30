@@ -669,16 +669,25 @@ function FormMetaModal({
   };
 
   // Modelo "Hotel": cria os campos faltantes (Nome, Check-in, Check-out, E-mail)
-  // e preenche os textos + a mensagem do WhatsApp com tokens {Rótulo} que a
-  // página pública substitui pelas respostas do lead. O número do WhatsApp e o
-  // botão "Salvar" ficam por conta do admin (não dá pra adivinhar o número).
+  // e JÁ SALVA os textos + a mensagem do WhatsApp com tokens {Rótulo} que a
+  // página pública substitui pelas respostas do lead. Persiste na hora (não
+  // depende do botão "Salvar") pra garantir que a mensagem dinâmica vá pro ar.
+  // O número do WhatsApp é opcional (sem ele, o lead escolhe o contato).
   const HOTEL_WHATS_MSG =
     "Olá, eu me chamo {Nome} e tenho interesse em uma reserva do dia {Check-in} ao dia {Check-out}.";
+  const HOTEL_TEXTS = {
+    welcome_eyebrow: "RESERVAS",
+    welcome_title: "Garanta sua reserva",
+    welcome_subtitle: "Preencha em 30 segundos e fale com a gente no WhatsApp.",
+    welcome_button_text: "Fazer reserva",
+    thank_you_title: "Quase lá!",
+    thank_you_message: "Te levamos pro WhatsApp pra confirmar sua reserva.",
+  };
   const applyHotelPreset = async () => {
     if (fields.length > 0 && !confirm(
       "Aplicar o modelo Hotel? Os campos que faltarem (Nome, Check-in, Check-out, " +
       "E-mail) serão adicionados e os textos das telas + a mensagem do WhatsApp " +
-      "serão preenchidos. Clique em Salvar no final pra confirmar os textos."
+      "serão salvos automaticamente."
     )) return;
     setApplyingPreset(true);
     try {
@@ -705,16 +714,22 @@ function FormMetaModal({
           display_order: order++,
         } as any);
       }
-      // Preenche textos no estado local — admin confirma no "Salvar".
-      setWelcomeEyebrow("RESERVAS");
-      setWelcomeTitle("Garanta sua reserva");
-      setWelcomeSubtitle("Preencha em 30 segundos e fale com a gente no WhatsApp.");
-      setWelcomeButton("Fazer reserva");
-      setThankTitle("Quase lá!");
-      setThankMsg("Te levamos pro WhatsApp pra confirmar sua reserva.");
+      // Persiste a mensagem + textos IMEDIATAMENTE (não espera o "Salvar").
+      await upd.mutateAsync({
+        id: form.id,
+        whatsapp_message: HOTEL_WHATS_MSG,
+        ...HOTEL_TEXTS,
+      } as any);
+      // Reflete no estado local pra UI ficar consistente sem reabrir o modal.
+      setWelcomeEyebrow(HOTEL_TEXTS.welcome_eyebrow);
+      setWelcomeTitle(HOTEL_TEXTS.welcome_title);
+      setWelcomeSubtitle(HOTEL_TEXTS.welcome_subtitle);
+      setWelcomeButton(HOTEL_TEXTS.welcome_button_text);
+      setThankTitle(HOTEL_TEXTS.thank_you_title);
+      setThankMsg(HOTEL_TEXTS.thank_you_message);
       setWhatsMsg(HOTEL_WHATS_MSG);
-      toast.success("Modelo Hotel aplicado", {
-        description: "Clique em Salvar pra confirmar. O número do WhatsApp é opcional.",
+      toast.success("Modelo Hotel aplicado e salvo", {
+        description: "Já vale no form público. Número do WhatsApp é opcional.",
       });
     } catch (e: any) {
       toast.error("Erro ao aplicar modelo", { description: e.message });
@@ -732,8 +747,9 @@ function FormMetaModal({
             <p className="text-[11.5px] text-ktxt mt-0.5 leading-snug">
               Cria os campos <b>Nome, Check-in, Check-out e E-mail</b> e configura o redirecionamento
               pro WhatsApp com a mensagem "Olá, eu me chamo … e tenho interesse em uma reserva do dia …
-              ao dia …". Depois é só salvar (o número do WhatsApp é opcional — sem ele,
-              o lead escolhe o contato ao abrir o app).
+              ao dia …". Salva na hora e já vale no form público — ao finalizar, o lead
+              é levado pro WhatsApp na hora com a mensagem pronta. O número é opcional
+              (sem ele, o lead escolhe o contato ao abrir o app).
             </p>
           </div>
           <KButton type="button" variant="outline" size="sm" onClick={applyHotelPreset} loading={applyingPreset}>
