@@ -111,15 +111,19 @@ function loadGTM(containerId: string) {
   document.body.appendChild(ns);
 }
 
-/** Monta o link wa.me a partir do número (só dígitos) + mensagem opcional. */
+/**
+ * Monta o link wa.me a partir do número (só dígitos) + mensagem opcional.
+ * Se não houver número mas houver mensagem, gera o link sem destinatário
+ * (https://wa.me/?text=…) — o WhatsApp abre deixando o lead escolher o
+ * contato, com a mensagem já preenchida. Retorna null só quando não há
+ * nem número nem mensagem.
+ */
 function buildWhatsAppLink(number?: string | null, message?: string | null): string | null {
-  if (!number) return null;
-  const digits = number.replace(/\D/g, "");
-  if (!digits) return null;
-  const base = `https://wa.me/${digits}`;
-  return message && message.trim()
-    ? `${base}?text=${encodeURIComponent(message.trim())}`
-    : base;
+  const digits = (number ?? "").replace(/\D/g, "");
+  const text = message && message.trim() ? message.trim() : "";
+  if (!digits && !text) return null;
+  const base = digits ? `https://wa.me/${digits}` : "https://wa.me/";
+  return text ? `${base}?text=${encodeURIComponent(text)}` : base;
 }
 
 /** Normaliza rótulo pra casar token: lowercase, sem acento, sem pontuação. */

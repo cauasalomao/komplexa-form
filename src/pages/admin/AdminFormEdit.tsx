@@ -714,7 +714,7 @@ function FormMetaModal({
       setThankMsg("Te levamos pro WhatsApp pra confirmar sua reserva.");
       setWhatsMsg(HOTEL_WHATS_MSG);
       toast.success("Modelo Hotel aplicado", {
-        description: "Preencha o número do WhatsApp e clique em Salvar.",
+        description: "Clique em Salvar pra confirmar. O número do WhatsApp é opcional.",
       });
     } catch (e: any) {
       toast.error("Erro ao aplicar modelo", { description: e.message });
@@ -732,7 +732,8 @@ function FormMetaModal({
             <p className="text-[11.5px] text-ktxt mt-0.5 leading-snug">
               Cria os campos <b>Nome, Check-in, Check-out e E-mail</b> e configura o redirecionamento
               pro WhatsApp com a mensagem "Olá, eu me chamo … e tenho interesse em uma reserva do dia …
-              ao dia …". Depois é só preencher o número do WhatsApp e salvar.
+              ao dia …". Depois é só salvar (o número do WhatsApp é opcional — sem ele,
+              o lead escolhe o contato ao abrir o app).
             </p>
           </div>
           <KButton type="button" variant="outline" size="sm" onClick={applyHotelPreset} loading={applyingPreset}>
@@ -811,8 +812,10 @@ function FormMetaModal({
         <div className="pt-3 border-t border-kbdr">
           <p className="k-eyebrow">Botão final → WhatsApp</p>
           <p className="text-[11px] text-kgray mt-1 mb-2">
-            Se preencher o número, ao enviar o form o botão final leva o lead pra uma conversa
-            no WhatsApp (e redireciona em 5s). Tem prioridade sobre o Redirect URL acima.
+            Ao enviar o form, o botão final leva o lead pra uma conversa no WhatsApp
+            (e redireciona em 5s). Tem prioridade sobre o Redirect URL acima.
+            Se deixar o número vazio mas preencher a mensagem, o WhatsApp abre com o texto
+            pronto e o lead escolhe o contato.
             <br />
             💡 Na mensagem, use <code className="bg-kbg px-1 rounded">{"{Rótulo}"}</code> pra inserir a
             resposta de um campo (ex.: <code className="bg-kbg px-1 rounded">{"{Nome}"}</code>,{" "}
